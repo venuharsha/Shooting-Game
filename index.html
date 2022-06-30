@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Game</title>
+    <script src="./bullet.js"></script>
+    <script src="./player1.js"></script>
+    <script src="./player2.js"></script>
+  </head>
+  <body>
+    <div style="margin-bottom: 20px">
+      <canvas id="gameCanvas" width="500" height="500"></canvas>
+    </div>
+    <div style="margin-bottom: 20px">
+      <button id="start">Start Game</button>
+      <p>Result: <span id="result"></span></p>
+      <p>Player 1 - Won (<span id="won1">0</span>)</p>
+      <p>Player 2 - Won (<span id="won2">0</span>)</p>
+    </div>
+    <div>
+      <p style="font-weight: bold">
+        Final Result: <span id="finalresult"></span>
+      </p>
+    </div>
+    <script>
+      //Canvas board
+      let canvas, canvasContext;
+      window.onload = function () {
+        canvas = document.getElementById("gameCanvas");
+        canvasContext = canvas.getContext("2d");
+
+        document.addEventListener("keyup", keyPressed);
+        setInterval(mainloop, 1000 / 40);
+      };
+
+      //Player1 Dimensions
+      let PLAYER1_SIZE = 20;
+      let player1Xpos = 230;
+      let player1Ypos = 480;
+      let player1Health = 100;
+      // let playerXspeed = 5;
+      // let playerYspeed = 5;
+
+      //Player2 Dimensions
+      let PLAYER2_SIZE = 20;
+      let player2Xpos = 230;
+      let player2Ypos = 0;
+      let player2Health = 100;
+      // let enemyXspeed = 5;
+      // let enemyYspeed = 5;
+
+      const SPACE_KEY = 32;
+      const UP_KEY = 38;
+
+      //Keys to trigger the bullets
+      function keyPressed(evt) {
+        if (evt.keyCode == SPACE_KEY) {
+          player1Bullet();
+        }
+        if (evt.keyCode == UP_KEY) {
+          player2Bullet();
+        }
+      }
+
+      const mainloop = () => {
+        colorRect(0, 0, canvas.width, canvas.height, "black"); //bg
+
+        //Player1
+        const player1 = new Player1(
+          player1Xpos,
+          player1Ypos,
+          PLAYER1_SIZE,
+          PLAYER1_SIZE,
+          "green",
+          player1Health
+        );
+        player1.draw();
+
+        //Player2
+        const player2 = new Player2(
+          player2Xpos,
+          player2Ypos,
+          PLAYER2_SIZE,
+          PLAYER2_SIZE,
+          "red",
+          player2Health
+        );
+        player2.draw();
+
+        let finalResult = document.getElementById("finalresult");
+
+        //Player1bullets shoot
+        if (player1bullets.length > 0) {
+          player1bullets.forEach(function (bullet, i) {
+            bullet.draw();
+            bullet.player1BulletMove();
+            console.log(bullet.power);
+
+            player2Health = player2Health - bullet.power;
+            if (player2Health <= 0) {
+              player2Ypos = -30;
+              player1bullets = [];
+              console.log(player2Health);
+              result = document.getElementById("result");
+              player1won = document.getElementById("won1");
+              result.innerHTML = "Player1 won!";
+              player2Ypos = 0;
+              player2Health = 100;
+
+              player1won.innerHTML++;
+              if (player1won.innerHTML == 3) {
+                finalResult.innerHTML = "Match finished. Player1 Won the match";
+              }
+            }
+
+            if (bullet.outOfBounds()) {
+              delete player1bullets[i];
+            }
+          });
+
+          //Clear out the bullets
+          player1bullets = player1bullets.filter((item) => item !== undefined);
+          player1Ypos = 480;
+          player1Health = 100;
+        }
+
+        //Player2bullets shoot
+        if (player2bullets.length > 0) {
+          player2bullets.forEach(function (bullet, i) {
+            bullet.draw();
+            bullet.player2BulletMove();
+            console.log(bullet.power);
+
+            player1Health = player1Health - bullet.power;
+            if (player1Health <= 0) {
+              player1Ypos = 530;
+              player2bullets = [];
+              console.log(player1Health);
+              result = document.getElementById("result");
+              player2won = document.getElementById("won2");
+              result.innerHTML = "Player2 won!";
+              player1Ypos = 480;
+              player1Health = 100;
+
+              player2won.innerHTML++;
+              if (player2won.innerHTML == 3) {
+                finalResult.innerHTML = "Match finished. Player2 Won the match";
+              }
+            }
+
+            if (bullet.outOfBounds()) {
+              delete player2bullets[i];
+            }
+          });
+          //Clear out the bullets
+          player2bullets = player2bullets.filter((item) => item !== undefined);
+          player2Ypos = 0;
+          player2Health = 100;
+        }
+      };
+
+      //Function to style the players inside canvas
+      function colorRect(x, y, w, h, c) {
+        canvasContext.fillStyle = c;
+        canvasContext.fillRect(x, y, w, h);
+      }
+
+      let player1bullets = [];
+      let player2bullets = [];
+
+      function player1Bullet() {
+        const BULLET_SIZE = 5;
+        let player1bulletXpos =
+          player1Xpos + PLAYER1_SIZE / 2 - BULLET_SIZE / 2;
+        let player1bulletYpos = player1Ypos - BULLET_SIZE;
+        let player1bulletYspeed = 10;
+
+        let player1bullet = new Player1Bullet(
+          player1bulletXpos,
+          player1bulletYpos,
+          BULLET_SIZE,
+          BULLET_SIZE,
+          "white",
+          player1bulletYspeed,
+          (power = Math.floor(Math.random() * 6))
+        );
+        player1bullets.push(player1bullet);
+      }
+
+      function player2Bullet() {
+        const BULLET_SIZE = 5;
+        let player2bulletXpos =
+          player2Xpos + PLAYER2_SIZE / 2 - BULLET_SIZE / 2;
+        let player2bulletYpos = player2Ypos - BULLET_SIZE;
+        let player2bulletYspeed = 10;
+
+        let player2bullet = new Player2Bullet(
+          player2bulletXpos,
+          player2bulletYpos,
+          BULLET_SIZE,
+          BULLET_SIZE,
+          "white",
+          player2bulletYspeed,
+          (power = Math.floor(Math.random() * 6))
+        );
+        player2bullets.push(player2bullet);
+      }
+    </script>
+  </body>
+</html>
